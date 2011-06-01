@@ -1,0 +1,8 @@
+Nyala is an Android app for allowing handheld devices to get on wireless networks without having to type in 
+a password. It uses the ZXing API for scanning in a QRCode and then using the decoded text contained in the
+barcode as the SSID, PSK, etc. needed to get onto the local network. 
+
+For the average user typing in the password for a WLAN they're in range of and want to connect to can be
+pretty frustrating what with soft keyboards and all. We're hoping that people will start encoding their 
+WLAN PSKs as barcodes as well as human-readable text to make it easier for mobile devices to get on the network. 
+
