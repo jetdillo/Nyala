@@ -6,3 +6,6 @@ For the average user typing in the password for a WLAN they're in range of and w
 pretty frustrating what with soft keyboards and all. We're hoping that people will start encoding their 
 WLAN PSKs as barcodes as well as human-readable text to make it easier for mobile devices to get on the network. 
 
+Nyala is released under the GNU General Public License Version 2. 
+You can read a copy of this here: 
+http://www.gnu.org/licenses/gpl-2.0.html
