@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AbsoluteLayout
+android:id="@+id/widget0"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android"
+>
+<ImageView
+android:id="@+id/widget36"
+android:layout_width="320px"
+android:layout_height="240px"
+android:layout_x="3px"
+android:layout_y="4px"
+>
+</ImageView>
+<TextView
+android:id="@+id/NyalaMenuTxt"
+android:layout_width="fill_parent"
+android:layout_height="wrap_content"
+android:layout_marginTop="5px"
+android:layout_marginBottom="5px"
+android:layout_marginLeft="5px"
+android:layout_marginRight="5px"
+android:text="The Nyala (Tragelaphus aranus) is an African forest antelope found in eastern South Africa, Zimbabwe, Mozambique and Malawi. The name comes from the Swahili 'Inyala'. It tends to stay hidden in the deep forest and is one of the few Antelope species not to be the subject of a Monty Python sketch. "
+android:layout_x="0px"
+android:layout_y="250px"
+>
+</TextView>
+<Button
+android:id="@+id/MenuBackBtn"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Nyalas are cool!"
+android:layout_x="92px"
+android:layout_y="364px"
+>
+</Button>
+</AbsoluteLayout>
