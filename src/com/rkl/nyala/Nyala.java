@@ -118,7 +118,15 @@ public class Nyala extends Activity {
     @Override
     public void onStop() {
     	super.onStop();
+    	unregisterReceiver(wsr);
     }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	unregisterReceiver(wsr);
+    }
+    
     
    public void ScanBtnClickHandler(View v) {
 	         Intent zxScanIntent = new Intent("com.google.zxing.client.android.SCAN");
@@ -126,7 +134,7 @@ public class Nyala extends Activity {
 	         zxScanIntent.putExtra("SCAN_MODE", "QR_CODE_MODE");
 	         startActivityForResult(zxScanIntent, 0);
    }
-    
+     
    @Override
    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 	   
