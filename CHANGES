@@ -1,0 +1,20 @@
+12/27/11
+-Added an "About" screen
+-Added "Share" feature so that you can now share the last code you scanned w/ a friend. 
+-Added (but haven't hooked up) a parsing/validator class to sanitize decoded strings. 
+-If you are already connected to an AP, Nyala notices this and gives you the option to stay connected
+ to the current one or disconnect(with the assumption you're going to scan and connect to another AP). 
+
+12/24/11
+I figured it might be good to start running a CHANGES file here.
+
+12/20/11 
+-Fixed a bug where I was unregistering from the WifiStatusReceiver too many times which
+would sometimes cause a crash when exiting the app. 
+
+11/26/11
+-added more layout files for large-screen devices like tablets
+-added Setting Activity to provide basic options like auto-connect and auto-exit.
+
+3/10/11
+-Initial prototype version. 

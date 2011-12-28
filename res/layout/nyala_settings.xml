@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:key="NyalaPrefScreen">   
+    
+    <PreferenceCategory android:title="Basics">
+         <CheckBoxPreference
+    	     	 android:id="@+id/stayRunning"
+    		     android:key="stayRunning"
+    		     android:title="Auto-exit after connect"/>
+         <CheckBoxPreference
+                 android:id="@+id/autoConnect"  
+                 android:key="autoConnect"
+                 android:title="Auto-connect on scan" />
+                                         
+    </PreferenceCategory>               		           
+</PreferenceScreen>
+         
