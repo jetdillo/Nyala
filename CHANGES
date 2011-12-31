@@ -1,3 +1,7 @@
+12/30/11
+-Added support for the ZXing format of QREncoded WLAN info along the existing Nyala format.
+-Added some basic parsing/validation code to sanitize data being scanned in
+
 12/27/11
 -Added an "About" screen
 -Added "Share" feature so that you can now share the last code you scanned w/ a friend. 
@@ -14,7 +18,7 @@ would sometimes cause a crash when exiting the app.
 
 11/26/11
 -added more layout files for large-screen devices like tablets
--added Setting Activity to provide basic options like auto-connect and auto-exit.
+-added Settings Activity to provide basic options like auto-connect and auto-exit.
 
 3/10/11
 -Initial prototype version. 
