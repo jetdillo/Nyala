@@ -50,13 +50,15 @@ public class Nyala extends Activity {
 	private int connectAction=0;
 	private int scanAction=0;
 	private int scantry=0;
+	private int radioState=0;
 	private SharedPreferences connectActionPrefs;
 	private final String prefStr = new String("NyalaSettings");
 	
 	private static final int MENU_SHOWQR = Menu.FIRST; 
 	private static final int MENU_SETTINGS = Menu.FIRST +1;
 	private static final int MENU_ABOUT = Menu.FIRST+2;
-		
+	
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) { 
@@ -77,35 +79,6 @@ public class Nyala extends Activity {
 
        wsr = new WifiStatusReceiver();
        registerReceiver(wsr, wifilter);
-     
- 	  if (!(wm.isWifiEnabled())) {
- 	  AlertDialog.Builder ad = new AlertDialog.Builder(this);
-	  ad.setMessage("Wireless is currently disabled. Click 'Enable' to turn on WiFi")
-	         .setCancelable(false)
-	         .setPositiveButton("Enable", new DialogInterface.OnClickListener() {
-	             public void onClick(DialogInterface dialog, int id) {
-	            	 Toast.makeText( Nyala.this, "Turning on WiFi", Toast.LENGTH_SHORT ).show();
-                	 wm.setWifiEnabled(true);
-           
-	             }
-	         })                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-	         .setNegativeButton("Exit Nyala", new DialogInterface.OnClickListener() {
-	             public void onClick(DialogInterface dialog, int id) {
-	                  dialog.cancel();
-	                  finish();
-	             }
-	         });
-	  AlertDialog WiFi_AD = ad.create();
-                  WiFi_AD.show();
-       
- 	  } else {
- 		 ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
- 		 NetworkInfo ni = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
- 		 if (ni.isConnected()) {
- 			String apname = new String(wm.getConnectionInfo().getSSID());
- 			 Toast.makeText( Nyala.this, "Already connected to"+apname+", scanning another network will disconnect you", Toast.LENGTH_LONG ).show();
- 		 }
- 	  }	  	  
  	  
    }
    
@@ -149,19 +122,21 @@ public class Nyala extends Activity {
     @Override
     public void onStart() {
     	super.onStart();
-    	
+    	int wiStatus=0;
     	connectActionPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
     	connectAction=connectActionPrefs.getInt("stayRunning", 0);
     	scanAction=connectActionPrefs.getInt("autoConnect", 0);
+    	
     }
 
     @Override
     public void onResume() {
     	   super.onResume();
-    	  
+    	   
     	   connectActionPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
        	   connectAction=connectActionPrefs.getInt("stayRunning", connectAction);
        	   scanAction=connectActionPrefs.getInt("autoConnect", scanAction);
+       	   checkWiFiStatus();
     }
 
     @Override
@@ -181,6 +156,40 @@ public class Nyala extends Activity {
     	unregisterReceiver(wsr);
     }
     
+   private void checkWiFiStatus() {
+	   int radioState=0;
+	  final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+	     //radioState = wm.getWifiState();
+	     // if ( (radioState == wm.WIFI_STATE_DISABLED) || (radioState == wm.WIFI_STATE_UNKNOWN)) {
+	 	  if (!(wm.isWifiEnabled())) {
+	 	  AlertDialog.Builder ad = new AlertDialog.Builder(this);
+		  ad.setMessage("Wireless is currently disabled. Tap 'Enable' to turn on WiFi")
+		         .setCancelable(false)
+		         .setPositiveButton("Enable", new DialogInterface.OnClickListener() {
+		             public void onClick(DialogInterface dialog, int id) {
+		            	 Toast.makeText( Nyala.this, "Turning on WiFi", Toast.LENGTH_SHORT ).show();
+	                	 wm.setWifiEnabled(true);
+	           
+		             }
+		         })                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+		         .setNegativeButton("Exit Nyala", new DialogInterface.OnClickListener() {
+		             public void onClick(DialogInterface dialog, int id) {
+		                  dialog.cancel();
+		                  finish();
+		             }
+		         });
+		  AlertDialog WiFi_AD = ad.create();
+	                  WiFi_AD.show();
+	       
+	 	  } else {
+	 		 ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+	 		 NetworkInfo ni = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+	 		 if (ni.isConnected()) {
+	 			String apname = new String(wm.getConnectionInfo().getSSID());
+	 			 Toast.makeText( Nyala.this, "Already connected to"+apname+", scanning another network will disconnect you", Toast.LENGTH_LONG ).show();
+	 		 }
+	 	  }	  	  
+   }
     
    public void ScanBtnClickHandler(View v) {
 	   
@@ -211,11 +220,12 @@ public class Nyala extends Activity {
 	           final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 	           
 	           wc = new WifiConfiguration();
-	  
-	          //Get the results of the most recent network scan. 
-	          //This seems to happen automagically and regularly once Wifi is turned on, so we don't really need to initiate a scan ourselves. 
-	          //We'll just feed off the most recent results. 	        
-	          List<ScanResult> sl = wm.getScanResults();
+	   /*
+	         // Get the results of the most recent network scan. 
+	        //  This seems to happen automagically and regularly once Wifi is turned on, so we don't really need to initiate a scan ourselves. 
+	        //  We'll just feed off the most recent results. 	        
+	        // This is all for when we get around to doing 802.1x    
+	           List<ScanResult> sl = wm.getScanResults();
 	          Iterator isl = sl.iterator();
 	          ScanResult sr = null ;
 	          
@@ -230,12 +240,15 @@ public class Nyala extends Activity {
 	 		            break;
 	        	    }  
 	          }
+	          
+	         
 	           if (erAP == 1 ) {
 	        	   
 	        	   wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.IEEE8021X);
 	        	   wc.BSSID = new String(sr.BSSID);    
 	        	   //somethingsomethingsomething
 	           } else {
+	           */
 	        	   
 	        	  if (qrcontents.contains("WIFI")) {
 	        		 wc = ParseForZXingEncoding(qrcontents);
@@ -256,9 +269,9 @@ public class Nyala extends Activity {
 	  		  	         });
 	        	  }
 
-	        	   String ssid_str = wc.SSID;
-	        	   String bssid_str = wc.BSSID;
-	        	   String psk_str = wc.preSharedKey;
+	        	   String ssid_str = new String(wc.SSID);
+	        	   String bssid_str = new String(wc.BSSID);
+	        	   String psk_str = new String(wc.preSharedKey);
 	        
 	        	   Log.i("INFO","ssid_str="+ssid_str+" bssid_str="+bssid_str+" psk_str="+psk_str);
 	        	
@@ -268,6 +281,7 @@ public class Nyala extends Activity {
 	        	   
 	        	   //Management and ciphers were set during parsing  
 	        	   //Call to do the actual connect
+	        	   
 	        	   if (ssid_str.equals("invalid")) {
 	        		   AlertDialog.Builder ad = new AlertDialog.Builder(this);
 		  		  	    ad.setMessage("AccessPoint is invalid or unavailable ")
@@ -280,7 +294,7 @@ public class Nyala extends Activity {
 	        	   } else {
 	        	   ConnectFromScan(wc,wm);    
 	        	   }
-	           } 	
+	          // } 	
 	           
 	        } else if (resultCode == RESULT_CANCELED) {
 	        	AlertDialog.Builder ad = new AlertDialog.Builder(this);
@@ -336,7 +350,7 @@ public class Nyala extends Activity {
 		  int contentslen=0;
 		 
 		  int parse_score = 0;
-		  int length=0;
+		  int len_check=0;
 	      boolean isvalid=false;
 		  int delim=0;
 		  int type=0;
@@ -353,7 +367,7 @@ public class Nyala extends Activity {
 			 Log.i("INFO","contentslen="+contentslen);
 			 //check for overly long string: SSID Max length + BSSID(if present) + 64 bytes PSK(max)+formatting=115 chars
 			  if (contentslen <= 115) {
-				 length=1;
+				 len_check=1;
 				 
 			  }
 				  
@@ -369,7 +383,7 @@ public class Nyala extends Activity {
 				 
 				String [] qr_array =qrcontents.split("::");
 				
-				for (int i =0; i <=qr_array.length;i++) {
+				for (int i =0; i <qr_array.length;i++) {
 					Log.i("INFO","qr_array="+qr_array[i]);
 				}
 				 
@@ -380,12 +394,13 @@ public class Nyala extends Activity {
 				 for (char c : qrcontents.toCharArray()) {
 		               if (c == ':')
 		            	   sepcount++;
+		               Log.i("INFO","sepcount="+sepcount);
 		           }
-				 if (sepcount == 3) {
+				 if  (sepcount == 11)  {
 					   sepcheck=1;
 				 }
 				 
-				 if (length+delim+type+ssid_len+sepcheck == 5) {
+				 if (len_check+delim+type+ssid_len+sepcheck == 5) {
 				
 			       Log.i("INFO","Found a Nyala-format QRcode");
 		       	   ssidpos=qrcontents.indexOf("::");
@@ -418,7 +433,7 @@ public class Nyala extends Activity {
 			} else {
 				    wc = new WifiConfiguration();
 				    wc.SSID= new String("invalid");
-				    Log.i("INFO","length="+length+" delim="+delim+" type="+type+" ssid_len="+ssid_len+" sepcount="+sepcount);
+				    Log.i("INFO","len_check="+len_check+" delim="+delim+" type="+type+" ssid_len="+ssid_len+" sepcount="+sepcount);
 			}
 				 
 		return wc;
