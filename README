@@ -26,6 +26,6 @@ Nyala is released under the GNU General Public License Version 2.
 You can read a copy of this here: 
 http://www.gnu.org/licenses/gpl-2.0.html
 
-Nyala code from the ZXing barcode-scanning library, which itself is released under the Apache 2.0 License. 
+Nyala uses code from the ZXing barcode-scanning library, which itself is released under the Apache 2.0 License. 
 You can get a copy of that license here:
 http://www.apache.org/licenses/LICENSE-2.0 
