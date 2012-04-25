@@ -12,11 +12,12 @@ Nyala currently supports 2 formats for encoding WLAN data.
 
 Note the trailing characters at the end of each format. These are required.
 
-Nyala is a fairly straightforward app from an Android SDK perspective and has been found to work with a number of Android 
-phones and tablets running Android 3.x and 2.x:
+Nyala is a fairly straightforward app from an Android SDK perspective and should work with most Android phones running
+2.x and later. A few models which are known to work:
 G1 Dev phone
 HTC G2
 HTC EVO 4G
+HTC MyTouch Slide
 Motorola Droid
 Motorola Xoom 10.1 Tablet
 Huawei IDEOS 
