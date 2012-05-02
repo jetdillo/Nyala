@@ -6,12 +6,6 @@ package com.rkl.nyala;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.RemoteException;
-
-
-import java.util.ArrayList;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-import java.util.Iterator;
-import java.util.List;
 
 import android.app.AlertDialog;
 
@@ -26,12 +20,19 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.android.Contents;
+import com.google.zxing.client.android.Intents;
 import com.google.zxing.client.android.encode.*;
 import com.google.zxing.common.*;
 
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,11 +48,12 @@ public class Nyala extends Activity {
 	private String qrformat;
 	public WifiStatusReceiver wsr;
 	
-	private int connectAction=0;
-	private int scanAction=0;
+	private boolean connectAction=false;
+	private boolean scanAction=false;
+	private boolean saveScanAction=false;
 	private int scantry=0;
-	private int radioState=0;
-	private SharedPreferences connectActionPrefs;
+	private boolean confirmConnect=false;
+	private SharedPreferences nyalaPrefs;
 	private final String prefStr = new String("NyalaSettings");
 	
 	private static final int MENU_SHOWQR = Menu.FIRST; 
@@ -71,15 +73,12 @@ public class Nyala extends Activity {
         iv.setImageResource(R.drawable.nyala);
         iv.setAdjustViewBounds(true); 
         iv.setLayoutParams(new Gallery.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-        
-       final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
        
-       IntentFilter wifilter = new IntentFilter();
-       wifilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        IntentFilter wifilter = new IntentFilter();
+        wifilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 
-       wsr = new WifiStatusReceiver();
-       registerReceiver(wsr, wifilter);
- 	  
+        wsr = new WifiStatusReceiver();
+        registerReceiver(wsr, wifilter);
    }
    
     /* Creates the menu items  */
@@ -95,11 +94,13 @@ public class Nyala extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	Intent mIntent;
         String qrstring = new String(qrcontents);
+        String qrssid =  getSSIDFromQRStr(qrcontents);
         switch (item.getItemId()) {
         case MENU_SHOWQR:
         	mIntent = new Intent(Nyala.this,NyalaShare.class);
         	Log.i("INFO","Launching NyalaShare from Menu");
         	mIntent.putExtra("qrstr", qrstring);
+        	mIntent.putExtra("qrssid", qrssid);
         	startActivity(mIntent);
         	return true;
        
@@ -122,10 +123,13 @@ public class Nyala extends Activity {
     @Override
     public void onStart() {
     	super.onStart();
-    	int wiStatus=0;
-    	connectActionPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
-    	connectAction=connectActionPrefs.getInt("stayRunning", 0);
-    	scanAction=connectActionPrefs.getInt("autoConnect", 0);
+    	//nyalaPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
+    	nyalaPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+    	connectAction=nyalaPrefs.getBoolean("autoExit", connectAction);
+    	scanAction=nyalaPrefs.getBoolean("autoConnect", scanAction);
+    	saveScanAction = nyalaPrefs.getBoolean("autoSave", saveScanAction);
+    	
+    	Log.i("INFO","nyalaPrefs:connectAction:"+connectAction+" scanAction:"+scanAction+" saveScanAction:"+saveScanAction);
     	
     }
 
@@ -133,9 +137,12 @@ public class Nyala extends Activity {
     public void onResume() {
     	   super.onResume();
     	   
-    	   connectActionPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
-       	   connectAction=connectActionPrefs.getInt("stayRunning", connectAction);
-       	   scanAction=connectActionPrefs.getInt("autoConnect", scanAction);
+    	   nyalaPrefs = getSharedPreferences(prefStr, MODE_PRIVATE);
+       	   connectAction=nyalaPrefs.getBoolean("stayRunning", connectAction);
+       	   scanAction=nyalaPrefs.getBoolean("autoConnect", scanAction);
+       	   saveScanAction = nyalaPrefs.getBoolean("autoSave", saveScanAction);
+           Log.i("INFO","nyalaPrefs:connectAction:"+connectAction+" scanAction:"+scanAction+" saveScanAction:"+saveScanAction);
+
        	   checkWiFiStatus();
     }
 
@@ -147,7 +154,6 @@ public class Nyala extends Activity {
     @Override
     public void onStop() {
     	super.onStop();
-    	//unregisterReceiver(wsr);
     }
     
     @Override
@@ -157,10 +163,8 @@ public class Nyala extends Activity {
     }
     
    private void checkWiFiStatus() {
-	   int radioState=0;
 	  final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-	     //radioState = wm.getWifiState();
-	     // if ( (radioState == wm.WIFI_STATE_DISABLED) || (radioState == wm.WIFI_STATE_UNKNOWN)) {
+	   
 	 	  if (!(wm.isWifiEnabled())) {
 	 	  AlertDialog.Builder ad = new AlertDialog.Builder(this);
 		  ad.setMessage("Wireless is currently disabled. Tap 'Enable' to turn on WiFi")
@@ -204,8 +208,6 @@ public class Nyala extends Activity {
    @Override
    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 	   
-	    int erAP = 0;
-	    SharedPreferences ConnectActionPrefs;
 	    WifiConfiguration wc;
 	    	                                  
 	        if ( (requestCode == 0) && ((resultCode == RESULT_OK) ) ) {
@@ -214,41 +216,10 @@ public class Nyala extends Activity {
 	            // Handle successful scan
 	           Log.i("INFO","SCAN RESULTS: contents="+qrcontents+" format="+qrformat);
 	           
-	           //Toast.makeText( Nyala.this, "Scanned!", Toast.LENGTH_SHORT ).show();
-	           
 	           //WifiManager instance to control WiFi interface
 	           final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 	           
 	           wc = new WifiConfiguration();
-	   /*
-	         // Get the results of the most recent network scan. 
-	        //  This seems to happen automagically and regularly once Wifi is turned on, so we don't really need to initiate a scan ourselves. 
-	        //  We'll just feed off the most recent results. 	        
-	        // This is all for when we get around to doing 802.1x    
-	           List<ScanResult> sl = wm.getScanResults();
-	          Iterator isl = sl.iterator();
-	          ScanResult sr = null ;
-	          
-	          while (isl.hasNext()) {
-	        	    sr = (ScanResult) isl.next();
-	        	    
-	        	    //Prefer an SSID that identifies itself as part of EduRoam. 
-	        	    //We'll get around to this eventually. 
-	        	    
-	        	    if (sr.SSID=="eduroam") {
-	                    erAP=1;     	        
-	 		            break;
-	        	    }  
-	          }
-	          
-	         
-	           if (erAP == 1 ) {
-	        	   
-	        	   wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.IEEE8021X);
-	        	   wc.BSSID = new String(sr.BSSID);    
-	        	   //somethingsomethingsomething
-	           } else {
-	           */
 	        	   
 	        	  if (qrcontents.contains("WIFI")) {
 	        		 wc = ParseForZXingEncoding(qrcontents);
@@ -277,8 +248,7 @@ public class Nyala extends Activity {
 	        	
 	        	   //We should give the user a chance to see what SSID they've scanned in before connecting
 	        	   //This (will be) settable for those that just want to get on with things. 
-	        	   Toast.makeText( Nyala.this, "Connecting...", Toast.LENGTH_SHORT ).show();
-	        	   
+	  
 	        	   //Management and ciphers were set during parsing  
 	        	   //Call to do the actual connect
 	        	   
@@ -292,7 +262,32 @@ public class Nyala extends Activity {
 		  		  	             }
 		  		  	         });
 	        	   } else {
-	        	   ConnectFromScan(wc,wm);    
+	        	     if (scanAction) {
+	        	    	 Toast.makeText( Nyala.this, "Connecting...", Toast.LENGTH_SHORT ).show();
+	        	        ConnectFromScan(wc,wm,qrcontents); 
+	        	     } else {
+	        	    	 AlertDialog.Builder ad = new AlertDialog.Builder(this);
+	       	      	     ad.setMessage("About to connect to "+ssid_str+". Continue?")
+	       	      	         .setTitle("Confirm Connection")
+	       	      	         .setCancelable(false)
+	       	      	         .setPositiveButton("OK", new DialogInterface.OnClickListener() {  
+	       	      	             public void onClick(DialogInterface dialog, int id) {
+	       	      	                  confirmConnect=true;
+	       	      	             }
+	       	      	         })
+	       	      	    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+	   		             public void onClick(DialogInterface dialog, int id) {
+	   		                  dialog.cancel();
+	   		                  confirmConnect=false;
+	   		             }
+	   		         });
+	       	      	     AlertDialog AD = ad.create();
+                         AD.show();   
+	        	     }
+	        	     if (confirmConnect) {
+	        	    	 Toast.makeText( Nyala.this, "Connecting...", Toast.LENGTH_SHORT ).show();
+		        	        ConnectFromScan(wc,wm,qrcontents); 
+	        	     }
 	        	   }
 	          // } 	
 	           
@@ -312,19 +307,39 @@ public class Nyala extends Activity {
 	    
 	}
 
-   private void ConnectFromScan(WifiConfiguration wc,WifiManager wm) {
+   private void ConnectFromScan(WifiConfiguration wc,WifiManager wm,String qrstr) {
 	   
 	   wc.hiddenSSID=true;
  	  
 	   wc.priority = 1;
        wc.status = WifiConfiguration.Status.ENABLED;       
        int netId = wm.addNetwork(wc);
-       //int netId = wm.getConnectionInfo().getNetworkId();
        
-       //So we've got everything packed up this point. Let's lob it over the wall and see if it sticks.
-       wm.enableNetwork(netId, true); 
+   	Log.i("INFO","nyalaPrefs:saveScanAction:"+saveScanAction);
+
+       //So we've got everything packed up this point. Let's lob it over the wall and see if it sticks
+           
+       if (wm.enableNetwork(netId, true)) {
+    	   if (saveScanAction) {
+    		   saveScan(qrstr,wc.SSID.toString());
+    	   }
+       }
+       
    }
    
+   public String getSSIDFromQRStr(String qrcontents) {
+	   WifiConfiguration wconfig = new WifiConfiguration();
+	   
+	   if (qrcontents.contains("WIFI")) {
+  		 wconfig = ParseForZXingEncoding(qrcontents);
+  		 Log.i("INFO","GOT ZXing Encoded SSID:"+wconfig.SSID);
+  	  }
+  	  if (qrcontents.endsWith("::")) {
+  		  wconfig = ParseForNyalaEncoding(qrcontents);
+  		  Log.i("INFO","GOT Nyala Encoded SSID:"+wconfig.SSID);
+  	  }
+  	  return wconfig.SSID;
+   }
    
    private WifiConfiguration ParseForNyalaEncoding(String qrcontents) {
 	   
@@ -394,7 +409,7 @@ public class Nyala extends Activity {
 				 for (char c : qrcontents.toCharArray()) {
 		               if (c == ':')
 		            	   sepcount++;
-		               Log.i("INFO","sepcount="+sepcount);
+		               //Log.i("INFO","sepcount="+sepcount);
 		           }
 				 if  (sepcount == 11)  {
 					   sepcheck=1;
@@ -446,16 +461,12 @@ public class Nyala extends Activity {
 	   String theBSSID = null; 
 	   String theTrailer = null;
 	   WifiConfiguration wc = null;
-	   String zxing_delim = new String(";");
 		  
 	   int passpos=0;
 	   int ssidpos=0;
-	   int typepos=0;
 	   int endpos=0;
-	   int bssidpos=0;
 	   int contentslen=0;
 		 
-	   int parse_score = 0;
 	   int length=0;
 	   int delim=0;
        int type=0;
@@ -548,7 +559,7 @@ public class Nyala extends Activity {
 		}
 		    return wc;
    }
-  
+   
    public class WifiStatusReceiver extends BroadcastReceiver {
 	   
 	   @Override
@@ -566,7 +577,7 @@ public class Nyala extends Activity {
 			   if (wsr_ni.getState() == State.CONNECTED) {
 
 				   Toast.makeText( Nyala.this, "Wifi now connected...", Toast.LENGTH_LONG ).show();
-				   if (connectAction == 1)  {
+				   if (connectAction)  {
 					   if (scantry > 0) {
 				           finish();
 					   } 
@@ -591,7 +602,38 @@ public class Nyala extends Activity {
 
    }
    
-   
-   
+   private void saveScan(String qrstr,String ssidstr) {
+
+	   int minside = 0;
+	   DisplayMetrics dm = new DisplayMetrics();
+ 	   getWindowManager().getDefaultDisplay().getMetrics(dm);
+ 	   int hip = dm.heightPixels;
+ 	   int wip = dm.widthPixels;
+	   if (hip < wip) {
+		   minside = hip;
+	   } else {
+		   minside = wip;
+	   }
+	      
+   	Log.i("INFO","INSIDE saveScan");
+	   
+           Intent encode_intent = new Intent("com.google.zxing.client.android.ENCODE");
+     	   encode_intent.setAction(Intents.Encode.ACTION);
+     	   encode_intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+     	   encode_intent.putExtra(Intents.Encode.TYPE, Contents.Type.TEXT);
+     	   encode_intent.putExtra(Intents.Encode.DATA, qrstr);
+     	   encode_intent.putExtra(Intents.Encode.FORMAT, BarcodeFormat.QR_CODE.toString());
+     	   QRCodeEncoder nyshareEncoder = new QRCodeEncoder(this,encode_intent,minside);
+     	   
+            Bitmap nyshareBm = null;
+ 		   try {
+ 			   nyshareBm = nyshareEncoder.encodeAsBitmap();
+ 			   NyalaLib nl = new NyalaLib();
+ 			   nl.saveScanToStorage(nyshareBm,ssidstr);
+ 		   } catch (WriterException e) {
+ 			   e.printStackTrace();
+ 		   }
+ 		   
+ } 
     
 }  

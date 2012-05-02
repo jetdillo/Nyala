@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:key="NyalaSettings">   
+    
+    <PreferenceCategory android:title="Basics">
+         <CheckBoxPreference
+    	     	 android:id="@+id/autoExit"
+    		     android:key="autoExit"
+    		     android:defaultValue="true"
+    		     android:title="Auto-exit after connect"/>
+         <CheckBoxPreference
+                 android:id="@+id/autoConnect"  
+                 android:key="autoConnect"
+                 android:defaultValue="true"
+                 android:title="Auto-connect on scan" />
+         <CheckBoxPreference
+                 android:id="@+id/autoSave"
+                 android:key="autoSave"
+                 android:defaultValue="true"
+                 android:title="Save last scan image" />
+                                         
+    </PreferenceCategory>               		           
+</PreferenceScreen>
+         
