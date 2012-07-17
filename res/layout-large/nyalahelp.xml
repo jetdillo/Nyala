@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AbsoluteLayout
+android:id="@+id/widget100"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android"
+>
+
+<LinearLayout
+android:id="@+id/widget99"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:orientation="vertical"
+android:layout_x="0dp"
+android:layout_y="0dp"
+>
+<ImageView
+android:id="@+id/nyalaimg"
+android:layout_width="260dp"
+android:layout_height="200dp"
+android:layout_marginTop="10dp"
+android:layout_marginBottom="10dp"
+android:src="@drawable/nyala_side"
+android:layout_gravity="center_horizontal"
+>
+</ImageView>
+<TextView
+android:id="@+id/nyalawhat_txt"
+android:layout_width="fill_parent"
+android:layout_height="wrap_content"
+android:layout_marginLeft="10dp"
+android:layout_marginRight="10dp"
+android:text="Usage: Press the 'Tap to Scan and Connect' button to scan in a QRCode for a WLAN in range. You will be connected automatically if it is in range and the password is correct"
+android:textSize="12sp"
+android:gravity="left"
+android:singleLine="false"
+android:layout_gravity="center_horizontal"
+>
+</TextView>
+
+<TextView
+    android:id="@+id/nyalaformat_txt"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:gravity="left"
+    android:singleLine="false"
+    android:text="@string/nyalahelp_3"
+    android:textSize="12sp" />
+
+<TextView
+    android:id="@+id/nyalaformat2_txt"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:gravity="left"
+    android:singleLine="false"
+    android:text="@string/nyalahelp_4"
+    android:textSize="12sp" />
+
+<TextView
+    android:id="@+id/nyalaformat3_txt"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:gravity="left"
+    android:singleLine="false"
+    android:text="@string/nyalahelp_5"
+    android:textSize="12sp" />
+
+<TextView
+    android:id="@+id/contactinfo"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:gravity="left"
+    android:singleLine="false"
+    android:text="@string/nyalahelp_6"
+    android:textSize="18sp" />
+
+
+</LinearLayout>
+</AbsoluteLayout>

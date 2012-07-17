@@ -2,9 +2,13 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:id="@+id/MENU_SHOWQR"
-          android:title="Show Barcode" />
+          android:title="Share" />
+  <item android:id="@+id/MENU_SHOWSCANS"
+          android:title="Wifi Gallery" /> 
   <item android:id="@+id/MENU_SETTINGS"
   		  android:title="Settings" />
   <item android:id="@+id/MENU_ABOUT"
           android:title="About" />
+  <item android:id="@+id/MENU_HELP" 
+          android:title="Help" />
 </menu>

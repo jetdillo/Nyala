@@ -22,14 +22,15 @@ android:layout_marginBottom="10px"
 android:src="@drawable/nyala_side"
 android:layout_gravity="center_horizontal"
 >
-</ImageView>
+</ImageView>    
+
 <TextView
 android:id="@+id/nyalabout_txt"
 android:layout_width="fill_parent"
 android:layout_height="wrap_content"
 android:layout_marginLeft="10px"
 android:layout_marginRight="10px"
-android:text="The Nyala(Tragelaphus angasii) is a member of the Antelope family, with a range in Southern Africa of Malawi, Mozambique and Zimbabwe. I was in Malawi a few years ago and got to visit the Nyala Suocoma Game Park, about 90 minutes outside Blantyre.I noticed that the Nyalas and Zebras seemed to hang out around each other. So &quot;Nyala&quot; seemed to be a good name for an app that uses the ZXing(AKA &quot;Zebra Crossing&quot;) Library"
+android:text="The Nyala(Tragelaphus angasii) is a member of the Antelope family, with a range in Southern Africa of Malawi, Mozambique and Zimbabwe. I was in Malawi a few years ago and noticed that the Nyalas and Zebras I saw seemed to hang out around each other. So &quot;Nyala&quot; seemed to be a good name for an app that uses the  &quot;Zebra Crossing&quot; Library"
 android:textSize="18sp"
 android:gravity="left"
 android:singleLine="false"

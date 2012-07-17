@@ -1,3 +1,15 @@
+7/17/12 
+-Fixed bug in ZXing-formatted QRCodes that was causing crashes
+-Fixed bugs which caused flaky attention to selected SharedPreferences
+-Added Gallery support for shared scans(Doesn't entirely work yet, the code is there, it's just not all hooked up yet)
+-Moved basic Wifi-handling code into separate method away from barcode parsing
+-Added NyalaLib class as a home for non-UI/non-Wifi support classes/methods
+-Added "disconnect" button state for when Nyala is launched already connected to one network
+ (This is mostly a testing use-case, but it might be useful for others)
+-Main picture now changes to the barcode you just scanned after a successful connect
+ (Maybe this should be a check-able feature?)
+-A bunch of other stuff I can't remember ATM
+
 12/30/11
 -Added support for the ZXing format of QREncoded WLAN info along the existing Nyala format.
 -Added some basic parsing/validation code to sanitize data being scanned in

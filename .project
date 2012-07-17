@@ -3,6 +3,7 @@
 	<name>Nyala</name>
 	<comment></comment>
 	<projects>
+		<project>ZXing</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

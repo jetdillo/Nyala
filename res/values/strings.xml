@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Nyala!</string>
-    <string name="app_name">Nyala</string>
+<string name="nyalasettings">NyalaSettings</string>
+<string name="app_name">Nyala</string>
+<string name="nyalabout">NyalAbout</string>
+<string name="nyalabout_txt">The Nyala(Tragelaphus angasii) is a South African Antelope, common in Malawi, Mozambique and Zimbabwe. A few years ago, I was in Malawi and spent part of a day at the Nyala Suocoma Game Park about 90 minutes outside Blantyre.I noticed that the Nyalas and Zebras seemed to hang out around each other. Nyala seemed to be a good name for an app that uses the ZXing(AKA "Zebra Crossing") Library</string>
+<string name="nyalashare">NyalaShare</string>
+<string name="nyalahelp">NyalaHelp</string>
+<string name="nyalahelp_1">Nyala uses the Barcode Scanner app to help get you on a WiFi network. If the owner/manager of the WiFi network has encoded their access details in a QRCode </string>
+<string name="nyalahelp_2">simply scan the code and Nyala will automatically complete the sign-in for you. </string>
+<string name="nyalahelp_3">To create a QRCode that Nyala understands, format your WiFi details as a string like the ones below and convert that string into the QRCode</string>
+<string name="nyalahelp_4">ZXing WIFI Format:\n WIFI:T:WPA;S:myssid;P:mysecretpassword;;</string>
+<string name="nyalahelp_5">Nyala Format:\n myssid::mybssid::mysecretpassword::</string>
+<string name="nyalahelp_6">For more help or to submit feedback, send email to:\n espressobot\@gmail.com</string>
+<string name="nyalahelp_7">or Visit us at:\n http://www.roadknightlabs.com/blog</string>
+<string name="title_list_preference">Scan History Depth</string>
+<string name="title_summary_preference">Scan History Depth</string>
+<string name="dialog_title_list_preference">Number of scans to save:</string>
+<string name="title_deletescan_preference">Clear Scan History</string>
+<string name="dialog_title_deletescan_preference">Clear (Delete) Scan History</string>
+<string name="nyalasettings_now">\"Now\"</string>
+<string name="nyala_delete_scans">\"Delete Saved Scans\"</string>
+
 </resources>

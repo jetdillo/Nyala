@@ -19,6 +19,6 @@ android:id="@+id/scanBtn"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
 android:layout_gravity="center_horizontal"
-android:onClick="ScanBtnClickHandler" android:text="Tap to Scan &amp; Connect">
+android:onClick="ScanBtnClickHandler" android:text="Scan &amp; Connect to WiFi">
 </Button>
 </LinearLayout>

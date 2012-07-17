@@ -2,6 +2,7 @@ Like the CHANGES file, but keeps track of features/functionality.
 
 Current Feature set:
 Auto-connect. If this is checked, Nyala will automatically attempt to connect to the SSID embedded in the QRCode
-it just scanned. 
+it just scanned. If unchecked, a dialog will pop up asking the user for confirmation before connecting. 
+
 Auto-exit. If this is checked, Nyala will automatically exit upon successfully connecting to the wireless network. 
 
