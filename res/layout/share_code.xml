@@ -12,5 +12,16 @@
         android:layout_centerVertical="true"
         android:layout_margin="10dp"
         android:src="@drawable/nyala" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/sharecodeIV"
+        android:layout_alignLeft="@+id/sharecodeIV"
+        android:layout_marginBottom="118dp"
+        android:layout_marginLeft="78dp"
+        android:text="@string/empty_string"
+         />
    
 </RelativeLayout>

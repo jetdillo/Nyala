@@ -3,6 +3,7 @@
 
 package com.rkl.nyala;
 
+import java.io.FileOutputStream;
 import java.util.List;
 
 import android.app.Activity;
@@ -86,9 +87,9 @@ public class Nyala extends Activity {
         TextView channelLabel = (TextView) findViewById(id.channelLbl);
         TextView signalLabel = (TextView) findViewById(id.signalLbl);
         
-        ssidLabel.setVisibility(TextView.INVISIBLE);
-        channelLabel.setVisibility(TextView.INVISIBLE);
-        signalLabel.setVisibility(TextView.INVISIBLE);
+    //    ssidLabel.setVisibility(TextView.INVISIBLE);
+    //    channelLabel.setVisibility(TextView.INVISIBLE);
+     //   signalLabel.setVisibility(TextView.INVISIBLE);
         
    }
    
@@ -108,10 +109,16 @@ public class Nyala extends Activity {
         String qrssid =  getSSIDFromQRStr(qrcontents);
         switch (item.getItemId()) {
         case MENU_SHOWQR:
-        	mIntent = new Intent(Nyala.this,NyalaShare.class);
-        	mIntent.putExtra("qrstr", qrstring);
-        	mIntent.putExtra("qrssid", qrssid);
-        	startActivity(mIntent);
+        	Log.i("INFO","Nyala: qrstring="+qrstring);
+        	if (!(qrstring.equals("None")) ) {
+            	mIntent = new Intent(Nyala.this,NyalaShare.class);
+            	mIntent.putExtra("qrstr", qrstring);
+        	    mIntent.putExtra("qrssid", qrssid);
+        	    startActivity(mIntent);
+        	} else {
+        		NyalaLib nl = new NyalaLib(Nyala.this);
+        		nl.SimpleDialogFactory("No Recent Scan", "OK", Nyala.this);
+        	}
         	return true;
         	
         case MENU_SHOWSCANS:
@@ -147,10 +154,6 @@ public class Nyala extends Activity {
     	saveScanAction = nyalaPrefs.getBoolean("autoSave", saveScanAction);
     	scanSavePath = nyalaPrefs.getString("ScanPath", scanSavePath);
     	NyalaLib nl = new NyalaLib(Nyala.this);
-    	
-    	if (nl.checkForMedia()) {
-    		boolean result=nl.createScanDir();
-    	}
     	
     }
 
@@ -226,16 +229,31 @@ public class Nyala extends Activity {
 	   
 	    scantry=1;   
 	    String btntext=null;
-	         
+	    List<WifiConfiguration> wcl;
+	    WifiConfiguration wc_active = new WifiConfiguration();
+	    WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 	    Button Btn = (Button)findViewById(id.scanBtn);
 	         
 	    btntext = new String (Btn.getText().toString());
 	    if (btntext.contains("Disconnect")) {
-	        WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+	   
+	       String curssid = new String(wm.getConnectionInfo().getSSID());
+	 	   wcl = wm.getConfiguredNetworks();
+	 	    
+	 	   for (WifiConfiguration wc : wcl) {
+	 		  Log.i("INFO","wc.SSID="+wc.SSID+" curssid="+curssid);
+	 	        if (wc.SSID.contains(curssid)) {
+	 	    		wc_active = wc;
+	 	    	}
+	 	    }
+	 	    //If the user wants to disconnect,
+	        //Adjust the priority of the current connection downward to make sure they don't immediately reconnect;
 	        wm.disconnect();
+	        wm.disableNetwork(wc_active.networkId);
+	        wc_active.priority = 2;
+	        wm.updateNetwork(wc_active);
 	        Btn.setText("Scan and Connect");
-	    } else {
-	         
+	    } else {    
 	         Intent zxScanIntent = new Intent("com.google.zxing.client.android.SCAN");
 	         
              PackageManager pm = getPackageManager();
@@ -275,7 +293,6 @@ public class Nyala extends Activity {
    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 	   
 	    WifiConfiguration wc;
-	    	                                  
 	        if ( (requestCode == 0) && ((resultCode == RESULT_OK) ) ) {
 	            qrcontents = new String(intent.getStringExtra("SCAN_RESULT"));
 	            qrformat = new String(intent.getStringExtra("SCAN_RESULT_FORMAT"));
@@ -370,23 +387,55 @@ public class Nyala extends Activity {
    private void ConnectFromScan(WifiConfiguration wc,WifiManager wm,String qrstr) {
 	   
        ProgressDialog pd=ProgressDialog.show(Nyala.this, "Connection Progress", "Connecting...", true);
-
+       String apfreq=null;
+       String apsignal=null;
+       String currSSID = wc.SSID.replace("\"","");
+       int netId =0;
+       List<ScanResult> sr = wm.getScanResults();
+       List<WifiConfiguration>wc_remembered = wm.getConfiguredNetworks();
+       
+       for (ScanResult ap : sr) {
+    	    
+    	    if (ap.SSID.equals(currSSID)) {
+    	    	apfreq = new String(Integer.toString(ap.frequency));
+    	    	apsignal = new String(Integer.toString(ap.level));
+    	    	Log.i("INFO","ConnectFromScan: ScanResults - apfreq="+apfreq+" apsignal="+apsignal);
+    	    	break;
+    	    }
+       }
+       
+       for (WifiConfiguration wcr: wc_remembered) {
+    	   String listedSSID = new String(wcr.SSID.replace("\"",""));
+    	   if (listedSSID.equals(currSSID)) {
+    		   netId=wcr.networkId;
+    		   Log.i("INFO","FOUND NETWORK ID "+netId+" FOR "+wcr.SSID);
+    		   break;
+    	   }
+       }
+       
 	   wc.hiddenSSID=true;
  	  
 	   wc.priority = 1;
-       wc.status = WifiConfiguration.Status.ENABLED;       
-       int netId = wm.addNetwork(wc);
+       wc.status = WifiConfiguration.Status.ENABLED;  
+       
+       //If the network isn't in the current list of configured networks, add it in
+       if (netId ==0 ){
+    	   netId = wm.addNetwork(wc);
+       }
            
        //So we've got everything packed up this point. Let's lob it over the wall and see if it sticks
           
        if (wm.enableNetwork(netId, true)) {
     	   pd.dismiss();
     	   if (saveScanAction) {
-    		   saveScan(qrstr,wc.SSID.toString());
+    		 //  saveScan(qrstr,wc.SSID.toString());
+    		   saveScan(qrstr, wc.SSID);
     	   }
     	   Bitmap bm = scanToBitmap(qrstr);
     	   ImageView iv = (ImageView) findViewById(id.nyala);
     	   iv.setImageBitmap(bm);
+    	   setAPInfoView(wc.SSID,apfreq,apsignal);
+    	   
     	   
        } else {
     	   pd.setMessage("...Failed");
@@ -507,6 +556,9 @@ public class Nyala extends Activity {
        int type=0;
 	   int ssid_len=0;
 	   int sepcheck=0;
+	   int components=0;
+	   
+	   Log.i("INFO","qrcontents="+qrcontents);
 	   
 	   contentslen = qrcontents.length(); 
 		  //validate length
@@ -515,33 +567,38 @@ public class Nyala extends Activity {
 			 //check for overly long string: SSID Max length + BSSID(if present) + 64 bytes PSK(max)+formatting=115 chars
 	 		 length=1;			  
 		 } 
-		 
+	     
+	     if ( (endpos=qrcontents.indexOf(";;")) >0) {
+			  delim=1;
+	     }
+	     
 		 if ( (qrcontents.startsWith("WIFI")) && (qrcontents.contains("T:")) 
-			   && (qrcontents.contains("S:")) && (qrcontents.contains("P:")) && (qrcontents.endsWith(";;")) ){
-
-	     //Valid ZXing-formatted WLAN string
-			endpos=(qrcontents.indexOf(";;"));
-			delim=1;
-			
+			   && (qrcontents.contains("S:")) && (qrcontents.contains("P:")) ){
+         
 		    wifiStr = new String (qrcontents.substring(5,endpos));
+		    wifiStrArr = new String[3];
 		    wifiStrArr = wifiStr.split(";");
 		    
 		    for (int i=0;i < 3;i++) {
 		    			    	
 		    	if (wifiStrArr[i].startsWith("S:")) {
 		    		theSSID = new String(wifiStrArr[i].substring(2));
+		    		components +=1;
 		    	}
 		    	if (wifiStrArr[i].startsWith("T:")) {
 		    		WlanAuthType= new String(wifiStrArr[i].substring(2));
+		    		components +=1;
 		    	}
 		    	if (wifiStrArr[i].startsWith("P:")) {
 		    		thePSK= new String(wifiStrArr[i].substring(2));
+		    		components+=1;
 		    	}
 		    }
 		    
 		 }   
 		    
-		 if (wifiStrArr.length  !=3) {
+		 if (components !=3) {
+			 
 			    wc = new WifiConfiguration();
 			    wc.SSID= new String("invalid");
 		    	AlertDialog.Builder ad = new AlertDialog.Builder(this);
@@ -645,8 +702,10 @@ public class Nyala extends Activity {
                  
 				   Button connectBtn = (Button) findViewById(id.scanBtn);
 				   connectBtn.setText("Disconnect");
-				   
+			
+				   toggleAPInfoVisibility(View.VISIBLE);
 				   Toast.makeText( Nyala.this, "Wifi now connected...", Toast.LENGTH_SHORT ).show();
+				   
 				   if (connectAction)  {
 					   if (scantry > 0) {
 				           finish();
@@ -667,7 +726,8 @@ public class Nyala extends Activity {
 				    	  
 				    	  Toast.makeText(Nyala.this,"Wifi Connection failed because "+rsn_str+". Try again in a moment", Toast.LENGTH_LONG).show();
 				    	   } else {
-				    		Toast.makeText(Nyala.this, "Wifi Connection failed for an unknown reason", Toast.LENGTH_LONG).show();
+				    		toggleAPInfoVisibility(View.INVISIBLE);  
+				    		Toast.makeText(Nyala.this, "Wifi disconnected", Toast.LENGTH_LONG).show();
 				    	   }
 				       }             
 		  }
@@ -677,25 +737,29 @@ public class Nyala extends Activity {
    }
    
    private void saveScan(String qrstr,String ssidstr) {
-
-	  Bitmap scanBm= scanToBitmap(qrstr);
-      NyalaLib nl = new NyalaLib(Nyala.this);
-      if (!(nl.saveScanToStorage(scanBm,ssidstr,Nyala.this))) {
+      
+	  String clean_ssidstr= new String(ssidstr.substring(1,(ssidstr.length())-1)); 
+	  
+	  if(saveScanAction) {
+		  
+	      Bitmap scanBm= scanToBitmap(qrstr);
+          NyalaLib nl = new NyalaLib(Nyala.this);
+          if (!(nl.saveScan(scanBm,clean_ssidstr,Nyala.this))) {
     	  
-    	  AlertDialog.Builder ad = new AlertDialog.Builder(this);
-		  ad.setTitle("File IO Error")
-		         .setMessage("Could not save scanned barcode, check filename and permissions" )
-		         .setCancelable(false)
-		         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-		             public void onClick(DialogInterface dialog, int id) {
-		             dialog.cancel();
-		             }
+    	      AlertDialog.Builder ad = new AlertDialog.Builder(this);
+		      ad.setTitle("File IO Error")
+		             .setMessage("Could not save scanned barcode, check filename and permissions" )
+		             .setCancelable(false)
+		             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		                 public void onClick(DialogInterface dialog, int id) {
+		                 dialog.cancel();
+		                 }
 		         });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 		        
-		  AlertDialog saveScanAD = ad.create();
-	                  saveScanAD.show();
-      }
-	 
+		       AlertDialog saveScanAD = ad.create();
+	                       saveScanAD.show();
+          }
+	   }
    }
    
    private Bitmap scanToBitmap(String qrstr) {	
@@ -728,5 +792,34 @@ public class Nyala extends Activity {
  		   return nyshareBm;
  		
   } 
-    
+   
+  private void toggleAPInfoVisibility(int visibility) {
+
+	  TextView ssidLbl =  (TextView) findViewById(R.id.ssidLbl);
+	   TextView ssidTxt = (TextView) findViewById(R.id.ssidTV);
+	   TextView channelLbl = (TextView) findViewById(R.id.channelLbl);
+	   TextView channelTxt = (TextView) findViewById(R.id.channelTV);
+	   TextView signalLbl = (TextView) findViewById(R.id.signalLbl);
+	   TextView signalTxt = (TextView) findViewById(R.id.signalTV);
+	   
+	   ssidLbl.setVisibility(visibility);
+	   ssidTxt.setVisibility(visibility);
+	   channelLbl.setVisibility(visibility);
+	   channelTxt.setVisibility(visibility);
+	   signalLbl.setVisibility(visibility);
+	   signalTxt.setVisibility(visibility);  
+  }
+  
+  private void setAPInfoView(String ssid, String channel, String signal) {
+	  
+	   TextView ssidTxt = (TextView) findViewById(R.id.ssidTV);
+	   TextView channelTxt = (TextView) findViewById(R.id.channelTV);
+	   TextView signalTxt = (TextView) findViewById(R.id.signalTV);
+	   
+	   ssidTxt.setText(ssid);
+	   channelTxt.setText(channel);
+	   signalTxt.setText(signal);
+	   
+  }
+  
 }  

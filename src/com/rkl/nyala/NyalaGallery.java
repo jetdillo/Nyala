@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.InputStream;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.RemoteException;
@@ -19,6 +20,7 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -62,51 +64,60 @@ public class NyalaGallery extends Activity {
 		
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		String basepath = new String (Environment.getExternalStorageDirectory().toString());
-		scanpath = sp.getString("ScanPath", scanpath);
+		scanpath = sp.getString("SaveLoc", scanpath);
+		
+		// If scanpath is "Internal" load in images from Internal App Storage
+		// If scanpath is "External" load in images from SDCard
+		
 	    gallerypath = new String(basepath+"/"+scanpath);
 		
 		Gallery scanGallery = (Gallery) findViewById(id.nygallery);
-		 scanGallery.setAdapter(new ImageAdapter(NyalaGallery.this,gallerypath));
+		scanGallery.setAdapter(new ImageAdapter(NyalaGallery.this,gallerypath));
 		
         scanGallery.setSpacing(2);
         
 		scanGallery.setOnItemClickListener(new OnItemClickListener() {
 	        public void onItemClick(AdapterView parent, View v, int position, long id) {
 	            Toast.makeText(NyalaGallery.this, "" + position, Toast.LENGTH_SHORT).show();
+	            
+	            Intent toShareIntent = new Intent(NyalaGallery.this,NyalaShare.class);
+	            startActivity(toShareIntent);
 	        }
 	    });		
 	}
+
+	
 	
 	public class ImageAdapter extends BaseAdapter {
 	    int mGalleryItemBackground;
 	    private Context iaContext;
         File gallerydir;
         File[] scanFile;
-        FilenameFilter gfilter;
+        File noentry=null;
+        FilenameFilter galleryfilter;
         Bitmap[] scanBitmap = null;
-        private Integer[] mImageIds = {
-	          //fill in from count of loaded files
-	    };
-
-	    public ImageAdapter(Context c, String gallerypath) {
-	           iaContext = c;
+        String gallerypath = new String();
+        
+	    public ImageAdapter(Context c, String dir) {
+	    		
+	    	   iaContext = c;
+	    	
+	           gallerypath = new String(dir);
 	           gallerydir = new File(gallerypath);
-	   		   gfilter = new FilenameFilter() {
-	   			      public boolean accept(File f, String name) {
-	   			    	  return !name.startsWith(".");
-	   			      }
-	   		   };
-	   		
-	   		   scanFile = gallerydir.listFiles(gfilter);
-	   		   scanBitmap = new Bitmap[scanFile.length];
-	   		   for (int i=0;i < scanFile.length;i++) {
-	   			   Log.i("INFO","Bitmap name="+scanFile[i].toString());
-	   		       scanBitmap[i] = BitmapFactory.decodeFile(scanFile[i].toString());
-	   		   }
+	           GalleryLoader gl = new GalleryLoader(NyalaGallery.this);
+	           
+	           if (gallerypath.contains("sdcard")) {
+	        	 scanBitmap = gl.loadFromExternal();
+	        	 
+	           } else {
+	        	       scanBitmap = gl.loadFromInternal();
+	           }
+	      	 
+	           
 	    }
 
 	    public int getCount() {
-	        return mImageIds.length;
+	        return  scanBitmap.length;
 	    }
 
 	    public Object getItem(int position) {
@@ -118,15 +129,108 @@ public class NyalaGallery extends Activity {
 	    }
 
 	    public View getView(int position, View convertView, ViewGroup parent) {
-	        ImageView imageView = new ImageView(iaContext);
+	        ImageView iv = new ImageView(iaContext);
 
-	        imageView.setImageBitmap(scanBitmap[position]);
-	        imageView.setLayoutParams(new Gallery.LayoutParams(320, 240));
-	        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-	        
-	        return imageView;
+	        iv.setImageBitmap(scanBitmap[position]);
+	        iv.setLayoutParams(new Gallery.LayoutParams(320, 240));
+	        iv.setScaleType(ImageView.ScaleType.FIT_XY);
+	        return iv;
 	    }
+	    
 	}
-}
+	
+	public class GalleryLoader {
+		
+		Context gc;
+		
+		public GalleryLoader (Context c) {
+			gc = c;
+		}
+		
+		public Bitmap[] loadFromInternal() {
+			File gp;
+			Bitmap[] bitmap_arr;
+			String[] bitmapname = gc.fileList();
+			
+			int numbitmaps = gc.fileList().length;
+			
+			bitmap_arr = new Bitmap[numbitmaps];
+		    gp = gc.getFilesDir();
+		    
+		    for (int i=0;i < numbitmaps;i++) {
+		    	 String fn = gp.getAbsolutePath()+bitmapname[i];
+		    	 bitmap_arr[i] = BitmapFactory.decodeFile(fn);
+		    }
+		    return bitmap_arr;
+		}
+		
+		public Bitmap[] loadFromExternal() {
+		
+			String[] bitmapname = gc.fileList();
+			Bitmap[] bitmap_arr = new Bitmap[bitmapname.length];
+			File[] imagefile = new File[bitmapname.length];
+			File gp;
+			
+			NyalaLib nl = new NyalaLib(NyalaGallery.this);
+			
+			String externpath = new String(Environment.getExternalStorageDirectory().toString());
+			gp = new File(externpath);
+			
+			FilenameFilter imageFileFilter = new FilenameFilter() {
+				      public boolean accept(File f, String name) {
+				    	  return name.startsWith("nyala_");
+				      }
+			};
+			if (nl.checkForMedia()) {
+			    imagefile = gp.listFiles(imageFileFilter);
+			    bitmap_arr = new Bitmap[imagefile.length];
+			    for (int i=0; i< imagefile.length;i++) {
+			    	bitmap_arr[i] = BitmapFactory.decodeFile(imagefile[i].toString());
+			    }
+	    }
+	   return bitmap_arr;
+	}
+		
+	
+	}
+
+	 private void dialogFactory(String msgstr,String posbtn, String negbtn,Context c) {
+	    	
+			AlertDialog.Builder ad = new AlertDialog.Builder(c);
+			  ad.setMessage(msgstr)
+			         .setCancelable(false)
+			         .setPositiveButton(posbtn, new DialogInterface.OnClickListener() {
+			             public void onClick(DialogInterface dialog, int id) {
+			            	dialog.cancel();
+			            	finish();
+			             }
+			         })                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+			         .setNegativeButton(negbtn, new DialogInterface.OnClickListener() {
+			             public void onClick(DialogInterface dialog, int id) {
+			                  dialog.cancel();
+			                  finish();
+			             }
+			         });
+			AlertDialog Share_AD = ad.create();
+		                Share_AD.show();
+		    }
+	 
+	private void dialogFactory(String msgstr, String posbtn, Context c) {
+		AlertDialog.Builder ad = new AlertDialog.Builder(c);
+		  ad.setMessage(msgstr)
+		         .setCancelable(false)
+		         .setPositiveButton(posbtn, new DialogInterface.OnClickListener() {
+		             public void onClick(DialogInterface dialog, int id) {
+		            	dialog.cancel();
+		            	finish();
+		             }
+		         });
+		AlertDialog Share_AD = ad.create();
+	                Share_AD.show();
+	}
+	
+   }
+	
+
 
 

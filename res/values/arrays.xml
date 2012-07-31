@@ -16,4 +16,12 @@
     <string-array name="entryvalues_deletescan_preference">
        <item>Now</item>
    </string-array>
+   <string-array name="entries_loc_preference">
+       <item>Internal</item>
+       <item>External(SD card)</item>       
+   </string-array>
+   <string-array name="entryvalues_loc_preference">
+       <item>Internal</item>
+       <item>External(SD card)</item>
+   </string-array>
 </resources>

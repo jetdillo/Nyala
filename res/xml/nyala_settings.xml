@@ -18,18 +18,19 @@
                  android:id="@+id/autoSave"
                  android:key="autoSave"
                  android:defaultValue="true"
-                 android:title="Save last scan image to Gallery" />
+                 android:title="Auto-save last scan" />
                                          
     </PreferenceCategory>
     
     <PreferenceCategory android:title="Scans">
-        <EditTextPreference android:enabled="true" 
-                            android:key="ScanPath" 
-                            android:dialogTitle="Scan Folder" 
-                            android:selectable="true" 
-                            android:dialogMessage="Folder on SDCard to save scans to" 
-                            android:defaultValue="nyala/scans"
-                            android:title="Pathname"/>
+        
+            <ListPreference
+                android:key="SaveLoc"
+                android:title="@string/title_loc_preference"
+                android:entries="@array/entries_loc_preference"
+                android:entryValues="@array/entryvalues_loc_preference"
+                android:dialogTitle="@string/dialog_title_loc_preference" />
+        
           <ListPreference
                 android:key="SaveDepth"
                 android:title="@string/title_list_preference"

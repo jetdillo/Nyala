@@ -1,3 +1,19 @@
+7/30/12
+-Fixed another ZXing parsing bug with different QRCode generators not using the same terminating char sequence
+ specified in the ZXing docs and the QRCode generator on their website (But which Barcode Scanner happily eats). 
+ Thanks Kai MacTane <digitalsidhe@silmemar.org> for providing the barcode that brought this bug to the surface.
+
+-Fixed a bug which could cause duplicate entries of an AP to be added to the list of available APs after 
+ scanning. 
+-Did some work on NyalaLib: Added a few factory methods for UI and filesystem stuff. Refactored large chunks of the
+ barcode history/last-scan-saving code. The basic story here is that custom paths on SDcards are futzy on non-rooted
+phones across different vendors/carriers. Sometimes they work,sometimes you get "permission denied". 
+I'd rather not promise what I can't deliver, so custom paths had to go. So you can either save scanned barcodes
+ to the Internal App Data dir or to /mnt/sdcard.  There MAY be a way around this, but
+TBPH, I have bigger features to fry. If you REALLY want this, well, you're in the source tree for this project,
+you should know what to do. 
+-Gallery support is still being fleshed out. It shouldn't crash, but probably doesn't do much beyond that ATM
+
 7/17/12 
 -Fixed bug in ZXing-formatted QRCodes that was causing crashes
 -Fixed bugs which caused flaky attention to selected SharedPreferences

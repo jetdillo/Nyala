@@ -18,7 +18,10 @@
 <string name="dialog_title_list_preference">Number of scans to save:</string>
 <string name="title_deletescan_preference">Clear Scan History</string>
 <string name="dialog_title_deletescan_preference">Clear (Delete) Scan History</string>
+<string name="title_loc_preference">Save Location</string>
+<string name="dialog_title_loc_preference">Save scanned barcodes to:</string>
 <string name="nyalasettings_now">\"Now\"</string>
 <string name="nyala_delete_scans">\"Delete Saved Scans\"</string>
+<string name="empty_string">           </string>
 
 </resources>
