@@ -1,3 +1,8 @@
+7/31/12
+
+-Cleaned up Details display shown after you've connected to an AP
+-Added TextView showing SSID name to NyalaShare Activity
+
 7/30/12
 -Fixed another ZXing parsing bug with different QRCode generators not using the same terminating char sequence
  specified in the ZXing docs and the QRCode generator on their website (But which Barcode Scanner happily eats). 

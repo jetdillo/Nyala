@@ -86,11 +86,7 @@ public class Nyala extends Activity {
         TextView ssidLabel  = (TextView) findViewById(id.ssidLbl);
         TextView channelLabel = (TextView) findViewById(id.channelLbl);
         TextView signalLabel = (TextView) findViewById(id.signalLbl);
-        
-    //    ssidLabel.setVisibility(TextView.INVISIBLE);
-    //    channelLabel.setVisibility(TextView.INVISIBLE);
-     //   signalLabel.setVisibility(TextView.INVISIBLE);
-        
+ 
    }
    
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -220,7 +216,11 @@ public class Nyala extends Activity {
 	 		 NetworkInfo ni = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 	 		 if (ni.isConnected()) {
 	 			String apname = new String(wm.getConnectionInfo().getSSID());
+	 			ScanResult sr = getDetailsForAP(apname);
+	 			 setAPInfoView(sr.SSID,Integer.toString(sr.frequency),Integer.toString(sr.level));
+
 	 			 Toast.makeText( Nyala.this, "Already connected to"+apname+", scanning another network will disconnect you", Toast.LENGTH_SHORT ).show();
+	 		     
 	 		 }
 	 	  }	  	  
    }
@@ -820,6 +820,22 @@ public class Nyala extends Activity {
 	   channelTxt.setText(channel);
 	   signalTxt.setText(signal);
 	   
+  }
+  
+  private ScanResult getDetailsForAP(String theSSID) {
+	  
+	 WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+	 List<ScanResult> curr_scanlist = wm.getScanResults();
+	 ScanResult theSSID_Result=null;
+	       
+	       for (ScanResult sr : curr_scanlist) {
+	    	    
+	    	    if (sr.SSID.equals(theSSID)) {
+	    	    	theSSID_Result = sr;
+	    	    	break;
+	    	    }
+	       }
+	  return theSSID_Result;
   }
   
 }  

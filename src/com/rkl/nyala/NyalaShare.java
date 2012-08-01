@@ -41,6 +41,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Gallery;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Gallery.LayoutParams;
 
@@ -59,11 +60,15 @@ public class NyalaShare extends Activity {
        if (nyshareIntent != null) {
            setContentView(R.layout.share_code);
            nyshareStr = nyshareIntent.getStringExtra("qrstr");
+           String nyshareSSID = nyshareIntent.getStringExtra("qrssid");
            
     	if (!(nyshareStr.equals("None")) ){
     	   
     	   Log.i("INFO","nyshareStr="+nyshareStr);
     	   showScanBitmap(nyshareStr); 
+    	   
+           TextView shareText = (TextView) findViewById(R.id.nyShareTxt);
+           shareText.setText(nyshareSSID);
     	} else {
     		   Log.i("INFO", "No Recent Scan...searching for most recent save");
     		   nyshareStr = new String(nl.getLastScanFile());
