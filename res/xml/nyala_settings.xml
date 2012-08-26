@@ -17,7 +17,7 @@
          <CheckBoxPreference
                  android:id="@+id/autoSave"
                  android:key="autoSave"
-                 android:defaultValue="true"
+                 android:defaultValue="false"
                  android:title="Auto-save last scan" />
                                          
     </PreferenceCategory>

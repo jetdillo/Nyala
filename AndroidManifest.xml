@@ -41,6 +41,14 @@
             </intent-filter>
         </activity>
         
+        <activity android:name="NyalaHistory">
+            <intent-filter>
+                <action android:name=".NyalaHistory"/>
+                <category android:name="android.intent.category.default"/>
+            </intent-filter>
+        </activity>
+        
+        
         <activity android:name="NyalAbout">
             <intent-filter>
                 <action android:name=".NyalAbout"/>

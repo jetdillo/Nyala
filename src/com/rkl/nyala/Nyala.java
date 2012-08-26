@@ -49,7 +49,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Gallery.LayoutParams;
 
-public class Nyala extends Activity {
+public class Nyala extends Activity  {
 	private String qrcontents = new String("None");
 	private String qrformat;
 	public WifiStatusReceiver wsr;
@@ -62,6 +62,7 @@ public class Nyala extends Activity {
 	private SharedPreferences nyalaPrefs;
 	private final String prefStr = new String("NyalaSettings");
 	private String scanSavePath = new String("nyala/scans");
+	private NyalaLib nl = new NyalaLib(Nyala.this);
 	
 	
 	private static final int MENU_SHOWQR = Menu.FIRST; 
@@ -91,7 +92,7 @@ public class Nyala extends Activity {
    
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0,MENU_SHOWQR, 0, "Share Last");
-        menu.add(0,MENU_SHOWSCANS,0, "Wifi Gallery");
+        menu.add(0,MENU_SHOWSCANS,0, "Show Scan History");
         menu.add(0,MENU_SETTINGS, 0, "Settings");
         menu.add(0,MENU_ABOUT,0,"About");
         menu.add(0,MENU_HELP,0,"Help");
@@ -103,22 +104,35 @@ public class Nyala extends Activity {
     	Intent mIntent;
         String qrstring = new String(qrcontents);
         String qrssid =  getSSIDFromQRStr(qrcontents);
+    	mIntent = new Intent(Nyala.this,NyalaShare.class);
+    	
+    	String nyshareFile = new String(nl.getLastScanFileName()); 
+    	
         switch (item.getItemId()) {
         case MENU_SHOWQR:
         	Log.i("INFO","Nyala: qrstring="+qrstring);
-        	if (!(qrstring.equals("None")) ) {
-            	mIntent = new Intent(Nyala.this,NyalaShare.class);
-            	mIntent.putExtra("qrstr", qrstring);
-        	    mIntent.putExtra("qrssid", qrssid);
-        	    startActivity(mIntent);
+              
+        	if ( (qrstring.equals("None")) && (nyshareFile.equals("None")) ) {
+        	 	AlertDialog ad = nl.SimpleDialogFactory("No Recent Scan", "OK", Nyala.this);
+        		ad.show();
         	} else {
-        		NyalaLib nl = new NyalaLib(Nyala.this);
-        		nl.SimpleDialogFactory("No Recent Scan", "OK", Nyala.this);
+        	
+        	     if (!(qrstring.equals("None")) ) {
+                  	mIntent.putExtra("qrstr", qrstring);
+        	        mIntent.putExtra("qrssid", qrssid);
+        	     } else {
+      		         	nyshareFile = new String("file:"+nyshareFile);
+      		    	    mIntent = new Intent(Nyala.this,NyalaShare.class);
+      		         	mIntent.putExtra("qrstr", nyshareFile);
+      		        	mIntent.putExtra("qrssid",qrssid);
+      		     }
+        	    startActivity(mIntent);	
         	}
         	return true;
         	
         case MENU_SHOWSCANS:
-        	mIntent = new Intent(Nyala.this,NyalaGallery.class);
+        //	mIntent = new Intent(Nyala.this,NyalaGallery.class);
+        	mIntent = new Intent(Nyala.this,NyalaHistory.class);
         	startActivity(mIntent);
         	return true;
        
@@ -149,7 +163,6 @@ public class Nyala extends Activity {
     	scanAction=nyalaPrefs.getBoolean("autoConnect", scanAction);
     	saveScanAction = nyalaPrefs.getBoolean("autoSave", saveScanAction);
     	scanSavePath = nyalaPrefs.getString("ScanPath", scanSavePath);
-    	NyalaLib nl = new NyalaLib(Nyala.this);
     	
     }
 
@@ -186,8 +199,8 @@ public class Nyala extends Activity {
     	super.onDestroy();
     	
     }
-    
-    
+ 
+      
    private void checkWiFiStatus() {
 	  final WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 	   
@@ -253,6 +266,10 @@ public class Nyala extends Activity {
 	        wc_active.priority = 2;
 	        wm.updateNetwork(wc_active);
 	        Btn.setText("Scan and Connect");
+	        ImageView iv = (ImageView)findViewById(id.nyala);
+	        iv.setImageResource(R.drawable.nyala);
+	        
+	        
 	    } else {    
 	         Intent zxScanIntent = new Intent("com.google.zxing.client.android.SCAN");
 	         
@@ -739,11 +756,9 @@ public class Nyala extends Activity {
    private void saveScan(String qrstr,String ssidstr) {
       
 	  String clean_ssidstr= new String(ssidstr.substring(1,(ssidstr.length())-1)); 
-	  
-	  if(saveScanAction) {
 		  
 	      Bitmap scanBm= scanToBitmap(qrstr);
-          NyalaLib nl = new NyalaLib(Nyala.this);
+       //   NyalaLib nl = new NyalaLib(Nyala.this);
           if (!(nl.saveScan(scanBm,clean_ssidstr,Nyala.this))) {
     	  
     	      AlertDialog.Builder ad = new AlertDialog.Builder(this);
@@ -758,8 +773,15 @@ public class Nyala extends Activity {
 		        
 		       AlertDialog saveScanAD = ad.create();
 	                       saveScanAD.show();
-          }
-	   }
+         } else {
+        	 String sf = new String("nyala_"+clean_ssidstr+".png");
+        	 if( nl.readScanFromStorage(sf,Nyala.this))  {
+        		 Log.i("INFO","SUCCESSFULLY READ BACK "+sf);
+        	 } else {
+        		 Log.e("ERROR", "Failed to read back "+sf);
+        	 }
+        	 
+         }
    }
    
    private Bitmap scanToBitmap(String qrstr) {	
@@ -837,5 +859,6 @@ public class Nyala extends Activity {
 	       }
 	  return theSSID_Result;
   }
-  
+
+
 }  

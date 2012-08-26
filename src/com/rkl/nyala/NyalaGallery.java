@@ -47,7 +47,10 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.Gallery;
+import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Gallery.LayoutParams;
 
@@ -71,23 +74,26 @@ public class NyalaGallery extends Activity {
 		
 	    gallerypath = new String(basepath+"/"+scanpath);
 		
+	    ImageAdapter gImageAdapter = new ImageAdapter(NyalaGallery.this,gallerypath);
+	    
 		Gallery scanGallery = (Gallery) findViewById(id.nygallery);
-		scanGallery.setAdapter(new ImageAdapter(NyalaGallery.this,gallerypath));
+		//scanGallery.setAdapter(new ImageAdapter(NyalaGallery.this,gallerypath));
+		scanGallery.setAdapter(gImageAdapter);
 		
         scanGallery.setSpacing(2);
+        
         
 		scanGallery.setOnItemClickListener(new OnItemClickListener() {
 	        public void onItemClick(AdapterView parent, View v, int position, long id) {
 	            Toast.makeText(NyalaGallery.this, "" + position, Toast.LENGTH_SHORT).show();
 	            
 	            Intent toShareIntent = new Intent(NyalaGallery.this,NyalaShare.class);
+	            
 	            startActivity(toShareIntent);
 	        }
 	    });		
 	}
 
-	
-	
 	public class ImageAdapter extends BaseAdapter {
 	    int mGalleryItemBackground;
 	    private Context iaContext;
@@ -96,7 +102,9 @@ public class NyalaGallery extends Activity {
         File noentry=null;
         FilenameFilter galleryfilter;
         Bitmap[] scanBitmap = null;
+        String[] scanBitmapName;
         String gallerypath = new String();
+        GalleryLoader gl = new GalleryLoader(NyalaGallery.this);
         
 	    public ImageAdapter(Context c, String dir) {
 	    		
@@ -104,16 +112,16 @@ public class NyalaGallery extends Activity {
 	    	
 	           gallerypath = new String(dir);
 	           gallerydir = new File(gallerypath);
-	           GalleryLoader gl = new GalleryLoader(NyalaGallery.this);
-	           
 	           if (gallerypath.contains("sdcard")) {
 	        	 scanBitmap = gl.loadFromExternal();
-	        	 
+	        	 scanBitmapName = gl.getGalleryFilenames();
+	              	 
 	           } else {
 	        	       scanBitmap = gl.loadFromInternal();
+	        	       scanBitmapName = gl.getGalleryFilenames();
 	           }
-	      	 
 	           
+	      	
 	    }
 
 	    public int getCount() {
@@ -127,14 +135,28 @@ public class NyalaGallery extends Activity {
 	    public long getItemId(int position) {
 	        return position;
 	    }
-
+	    
 	    public View getView(int position, View convertView, ViewGroup parent) {
-	        ImageView iv = new ImageView(iaContext);
-
+	    	
+	    	LinearLayout llv = new LinearLayout(NyalaGallery.this);
+	    	llv.setOrientation(LinearLayout.VERTICAL);
+	    	
+	    	ImageView iv = new ImageView(iaContext);
 	        iv.setImageBitmap(scanBitmap[position]);
-	        iv.setLayoutParams(new Gallery.LayoutParams(320, 240));
 	        iv.setScaleType(ImageView.ScaleType.FIT_XY);
-	        return iv;
+	        
+
+	        String sbnpath = new String(scanBitmapName[position]);
+           
+	        TextView tv = new TextView(iaContext);
+	        
+	        tv.setText(sbnpath.substring((sbnpath.lastIndexOf("nyala_"))+6,(sbnpath.lastIndexOf("."))));
+	        tv.setTextSize((float) 24.00);
+	        llv.addView(iv);
+	        llv.addView(tv);
+	    
+	        //return iv;
+	        return llv;
 	    }
 	    
 	}
@@ -142,15 +164,32 @@ public class NyalaGallery extends Activity {
 	public class GalleryLoader {
 		
 		Context gc;
-		
+		String[] galleryFileNames;
 		public GalleryLoader (Context c) {
 			gc = c;
 		}
 		
+		public String[] getGalleryFilenames() {
+			return galleryFileNames;
+			
+		}
+		
+		private String[] convertArrays(File[] farray) {
+			
+			int numfiles = farray.length;
+			
+			String[] names_str= new String[numfiles];
+			for (int i=0;i < numfiles;i++) {
+				names_str[i]=farray[i].toString();
+			}
+			return names_str;
+		}
+		
+		
 		public Bitmap[] loadFromInternal() {
 			File gp;
 			Bitmap[] bitmap_arr;
-			String[] bitmapname = gc.fileList();
+			String[] bitMapNameStr = gc.fileList();
 			
 			int numbitmaps = gc.fileList().length;
 			
@@ -158,17 +197,20 @@ public class NyalaGallery extends Activity {
 		    gp = gc.getFilesDir();
 		    
 		    for (int i=0;i < numbitmaps;i++) {
-		    	 String fn = gp.getAbsolutePath()+bitmapname[i];
+		    	 String fn = gp.getAbsolutePath()+bitMapNameStr[i];
 		    	 bitmap_arr[i] = BitmapFactory.decodeFile(fn);
 		    }
+		    
+		    galleryFileNames = gc.fileList();
+		    
 		    return bitmap_arr;
 		}
 		
 		public Bitmap[] loadFromExternal() {
 		
-			String[] bitmapname = gc.fileList();
-			Bitmap[] bitmap_arr = new Bitmap[bitmapname.length];
-			File[] imagefile = new File[bitmapname.length];
+			String[] bitMapNameStr = gc.fileList();
+			Bitmap[] bitmap_arr = new Bitmap[bitMapNameStr.length];
+			File[] imagefile = new File[bitMapNameStr.length];
 			File gp;
 			
 			NyalaLib nl = new NyalaLib(NyalaGallery.this);
@@ -187,7 +229,10 @@ public class NyalaGallery extends Activity {
 			    for (int i=0; i< imagefile.length;i++) {
 			    	bitmap_arr[i] = BitmapFactory.decodeFile(imagefile[i].toString());
 			    }
-	    }
+	        } else {
+	        	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+	        }
+			galleryFileNames = convertArrays(imagefile);
 	   return bitmap_arr;
 	}
 		

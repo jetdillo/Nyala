@@ -1,37 +1,22 @@
 package com.rkl.nyala;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Environment;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
+
 import android.content.SharedPreferences;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.content.ContentResolver;
+
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.provider.Settings;
-
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.android.Contents;
-import com.google.zxing.client.android.Intents;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 public class NyalaLib {
 	
@@ -62,11 +47,20 @@ public NyalaLib(Context c) {
    public boolean saveScanToStorage(Bitmap bm,String ssidstr,Context c) {
 	  
 	   boolean result = false;
-	   
+
 	   String imgfile = new String("nyala_"+ssidstr+".png");
 	   try {
+		     
+		   
 	         FileOutputStream imgFOS = c.openFileOutput(imgfile,Context.MODE_PRIVATE); 
-	         result=true;
+	       if ( bm.compress(Bitmap.CompressFormat.PNG, 80,imgFOS)) { 
+               imgFOS.flush();    
+               imgFOS.close();
+	           result=true;
+	       } else {
+	    	    imgFOS.close();
+	    	    result=false;
+	       }
 	         
 	   } catch (IOException ioe) {
 		   result=false;
@@ -74,18 +68,31 @@ public NyalaLib(Context c) {
 	   return result;
    }
    
+   public boolean readScanFromStorage(String scanfile, Context c) {
+	   boolean result = false;
+	   Bitmap bm;
+	   try {
+		   FileInputStream imgFIS = c.openFileInput(scanfile);
+		   bm = BitmapFactory.decodeStream(imgFIS, null,null);
+		   result = true;
+		    
+	   } catch (FileNotFoundException fnf) {
+		   Log.e("ERROR", "Failed to read "+scanfile+" because "+fnf);
+		   result=false;
+	   }
+	return result;   
+   }
+   
+   
    public boolean saveScanToSD(Bitmap bm,String ssidstr,Context c) {
-	   SharedPreferences nyalaPrefs = PreferenceManager.getDefaultSharedPreferences(c);
        String scanSavePath = new String();
        String scanImageFile = new String();
 	   boolean result=false;
-	   File imgdir;
 	   File imgfile;
 	   scanSavePath = new String(getScanDir());
 	   scanImageFile = new String("nyala_"+ssidstr+".png"); 
 	   
 	  String sdPath = Environment.getExternalStorageDirectory().toString();
-      String storagePath = sdPath+"/"+ssidstr; 
      
 	  	 OutputStream ostream = null;
 		 imgfile = new File(sdPath, scanImageFile);
@@ -124,52 +131,72 @@ public NyalaLib(Context c) {
         }	
         return result;
     }
-    public String getScanDir() {
-    	if (checkForMedia()) {
-    		   SharedPreferences nyalaPrefs = PreferenceManager.getDefaultSharedPreferences(libcontext);
-    	       String scanSavePath = new String();
-    		   scanSavePath=nyalaPrefs.getString("ScanPath", scanSavePath);
-    		   return scanSavePath;
-    	} else {
-    		   return new String("failed");
-    	}
-    }
+ public String getScanDir() {
+    	
+    	 String nystorageDir = null;
+    	
+    	 SharedPreferences nyalaPrefs = PreferenceManager.getDefaultSharedPreferences(libcontext);
+    	 String storageLoc = new String(nyalaPrefs.getString("SaveLoc","Internal"));
+    	 if (storageLoc.equals("Internal")) {
+    		 nystorageDir = new String(Environment.getDataDirectory().toString());
+    		 
+    	 } else {
+    		 
+    	   if (checkForMedia()) {
+    		  nystorageDir = new String(Environment.getExternalStorageDirectory().toString());
+    	   } else {
+    		   nystorageDir = new String("Failed");
+    	   }
+    	 }
+    	 Log.i("INFO","NYSTORAGEDIR="+nystorageDir);
+    	 return nystorageDir;
+}
     
-    public String getLastScanFile() {
+    public String getLastScanFileName() {
       
-      
+    
       String scandir_str= new String(getScanDir());
       File scandir = new File(scandir_str);
 	  FilenameFilter nyfilter = FilterFactory("nyala_");  
 	  String latest_scan = null; 
 	  long[] scan_mtime;
 	  long last_mtime = 0;
+	  File[] scanlist;
 	    
-	  int pos=0;
-      if ( (!(scandir_str.equals("failed"))) && (nyfilter!=null) ) {
-    	  int numfiles = scandir.listFiles(nyfilter).length;
-    	  scan_mtime = new long[numfiles];
-    	  for (File scan_f : scandir.listFiles(nyfilter)) {
-    		  scan_mtime[pos]=scan_f.lastModified();
-    		  pos++;
-    	  }
-    	  Arrays.sort(scan_mtime);
-    	  last_mtime=scan_mtime[(scan_mtime.length)-1];
+      if ( !(scandir_str.equals("failed")) ) {
+    	 scanlist = scandir.listFiles(nyfilter);
     	  
-    	  for (File scan_f : scandir.listFiles(nyfilter)) {
-    		   if ( (scan_f.lastModified()) == last_mtime) {
-    			   latest_scan = new String(scan_f.toString());
-    			   break;
-    		   }
-    	  }
+         if (scanlist != null) {
     	  
+    	  if (scanlist.length >0 ) {
+    	  
+    	      scan_mtime = new long[scanlist.length];
+    	      int pos=0;
+    	      for (File scan_f : scandir.listFiles(nyfilter)) {
+    		      scan_mtime[pos]=scan_f.lastModified();
+    		      pos++;
+    	      }
+    	      Arrays.sort(scan_mtime);
+    	      last_mtime=scan_mtime[(scan_mtime.length)-1];
+    	  
+    	      for (File scan_f : scandir.listFiles(nyfilter)) {
+    	    	  Log.i("INFO","scan_f="+scan_f.toString());
+    		       if ( (scan_f.lastModified()) == last_mtime) {
+    			       latest_scan = new String(scan_f.toString());
+    			       break;
+    		       }
+    	      }
+    	  } else {
+    		      latest_scan = new String("None");
+    	  }
       } else {
     	      latest_scan = new String("None");
       }
+     }
       
-      Log.i("INFO","getLastScanFile: latest_scan="+latest_scan+"");
+     Log.i("INFO","getLastScanFile: latest_scan="+latest_scan);
       
-      return latest_scan;      
+     return latest_scan;      
  }
     
     

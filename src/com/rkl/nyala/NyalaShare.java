@@ -59,33 +59,23 @@ public class NyalaShare extends Activity {
        Intent nyshareIntent = getIntent();
        if (nyshareIntent != null) {
            setContentView(R.layout.share_code);
-           nyshareStr = nyshareIntent.getStringExtra("qrstr");
+           nyshareStr = new String(nyshareIntent.getStringExtra("qrstr"));
            String nyshareSSID = nyshareIntent.getStringExtra("qrssid");
-           
-    	if (!(nyshareStr.equals("None")) ){
-    	   
-    	   Log.i("INFO","nyshareStr="+nyshareStr);
-    	   showScanBitmap(nyshareStr); 
+    	   if (nyshareStr.contains("file:")) {
+    	           Log.i("INFO","nyshareStr="+nyshareStr);
+    	           String nyshareFileStr = new String(nyshareStr.replace("file:",""));
+    	           showFileBitmap(nyshareFileStr);
+    	   } else {
+    	           showScanBitmap(nyshareStr); 
+    	   }
     	   
            TextView shareText = (TextView) findViewById(R.id.nyShareTxt);
-           shareText.setText(nyshareSSID);
-    	} else {
-    		   Log.i("INFO", "No Recent Scan...searching for most recent save");
-    		   nyshareStr = new String(nl.getLastScanFile());
-    		    if (nyshareStr.equals("None")) {
-    		       	nl.SimpleDialogFactory("No Scan to Display", "Back", NyalaShare.this);
-    		    } else {
-    		    	    showScanBitmap(nyshareStr);
-    		    }
-    		}
-    	 
+           shareText.setText(nyshareSSID); 
     	}
      }
       
     public void onResume(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	
-    	Log.i("INFO","IN NyalaShare onResume");
     	
     }
     
@@ -120,6 +110,15 @@ public class NyalaShare extends Activity {
 		   }
         ImageView iv = (ImageView) findViewById(R.id.sharecodeIV);
         iv.setImageBitmap(nyshareBm);
+    }
+    
+    public void showFileBitmap(String bitmapFilename) {
+
+    	Bitmap bm = BitmapFactory.decodeFile(bitmapFilename);
+    
+    	ImageView iv = (ImageView) findViewById(R.id.sharecodeIV);
+    	iv.setImageBitmap(bm);
+    	
     }
     
    
